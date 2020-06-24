@@ -1,11 +1,11 @@
-#Komunikator
+# Komunikator
 Program stworzony w ramach przedmiotu Programowanie Współbieżne.
 Zawiera serwer i klienta dla prostego komunikatora, z możliwością
 rejestracji użytkownika, subskrypcji danego typu wiadomości i rozgłaszania
 wiadomości wybranego typu do pozostałych subskrybentów.
 Komunikacja odbywa się z wykorzystaniem kolejek wiadomości POSIX.
 
-##Kompilacja
+## Kompilacja
 W celu kompilacji projektu należy wykonać skrypt 'build'.
 ```bash
 $ ./build
@@ -14,7 +14,7 @@ Skrypt utworzy dwa pliki: 'client' i 'server', będące odpowiednio
 programami klienta i serwera. Program serwera nie wymaga żadnej
 interakcji, natomiast program klienta posiada prosty interfejs ncurses.
 
-##Pliki w projekcie
+## Pliki w projekcie
 - PROTOCOL - Opis wykorzystanego protokołu.
 - inf136728\_s.c - Kod programu serwera.
 - inf136728\_client.h - Plik zawiera funkcje wykorzystywane do komunikacji z serwerem oraz testowy interfejs aplikacij klienta wykorzystujący linię komend zamiast biblioteki ncurses.
