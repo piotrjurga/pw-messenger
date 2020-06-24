@@ -1,0 +1,94 @@
+Wszystkie wiadomości przesyłane pomiędzy klientem a serwerem należą
+do jednej struktury, tj. Message, składa się ona z pola mtype, typu
+long, oznaczającego typ wiadomości i unii, zawierającej wszystkie
+sposoby na jakie wykorzystana może zostać pamięć dla danego typu wiadomości.
+Dostępne typy wiadomości określa enum MType.
+
+typedef enum {
+    SEND_MESSAGE = 1300,
+    REGISTER,
+    LOGIN,
+    LOGOUT,
+    SUBSCRIBE,
+    NOTIFY = 5000,
+    RESULT
+} MType;
+
+typedef struct {
+    long mtype;
+    union {
+        // SEND_MESSAGE and NOTIFY
+        struct {
+            long type;
+            int  priority;
+            char text[128];
+        };
+
+        // REGISTER and LOGIN
+        struct {
+            char name[32];
+            int  id;
+        };
+
+        // SUBSCRIBE
+        struct {
+            Subscription subscription;
+        };
+
+        // RESULT
+        struct {
+            bool success;
+            char response[128];
+        };
+    };
+} Message;
+
+W celu rozpoczęcia komunikacji klient wysyła na kolejkę serwera (id = 1200)
+wiadomość typu REGISTER, wypełniając pole name nazwą rejestrowanego
+użytkownika, oraz pole id - identyfikatorem kolejki, przez którą
+odbywać będzie się dalsza komunikacja. Zarejestrowany użytkownik zostaje
+automatycznie zalogowany. Serwer odsyła swoją kolejką wiadomość
+typu RESULT, zawierającą informację o tym czy rejestracja zakończyła
+się sukcesem w polu success i wiadomość zwrotną w polu response.
+Alternatywnie, jeżeli klient rejestrował się już wcześniej, wysyła
+wiadomość typu LOGIN na kolejkę serwera, z analogicznie wypełnioną
+strukturą i otrzymuje wiadomość zwrotną tą samą kolejką.
+
+Wszystkie typy wiadomości poza REGISTER i LOGIN wraz z odpowiedziami na nie,
+przesyłane są przez kolejkę klienta.
+
+W celu rozgłoszenia wiadomości w systemie, klient wysyła wiadomość typu 
+SEND_MESSAGE, w polu type zapisując typ wiadomości jaką ma rozgłosić
+serwer (zarezerwowane na to identyfikatory to 4000-4999). Typy wiadomości
+nie wymagają rejestracji. Pole priority należy wypełnić priorytetem
+wiadomości, gdzie niższe wartości oznaczają wyższy priorytet. Pole text
+należy wypełnić treścią wiadomości. Po otrzymaniu tej wiadomości,
+serwer zamienia wartość z pola mtype na wartość z pola type oraz
+rozgłasza ją do wszystkich procesów, które zasybskrybowały typ
+zapisany w polu type. Serwer nie odsyła wiadomości zwrotnej do nadawcy.
+
+W celu sybskrybcji danego typu wiadomości klient wysyła wiadomość typu
+SUBSCRIBE, z wypełnioną strukturą typu Subscription.
+
+typedef struct {
+    long mtype;
+    long timeout;
+    bool notify;
+} Subscription;
+
+W polu subscription.mtype klient zapisuje typ wiadomości do zasubskrybowania,
+w polu timeout zapisuje ilość nanosekund, po których subskrybcja ma wygasnąć,
+lub 0 w przypadku subskrybcji permanentnej. W polu notify należy zapisać
+informację o tym czy klient chce otrzymywać powiadomienia o nowych
+wiadomościach tego typu. Jeżeli pole to zawiera wartość true, za każdym
+razem gdy serwer wysyła wiadomość danego typu na kolejkę klienta, wysyła
+również wiadomość typu NOTIFY, z zasubskrybowanym typem zapisanym w polu
+type. W celu asynchronicznego odbierania danego typu wiadomości, wystarczy,
+że program klienta odbiera asynchronicznie wiadomości NOTIFY i po ich
+otrzymaniu, odbiera automatycznie typ wiadomości o jakim powiadamiają.
+Po otrzymaniu wiadomości SUBSCRIBE, serwer odsyła wiadomość typu RESULT,
+informującą o tym czy subskrybcja przebiegła pomyślnie w polu success
+oraz wiadomością zwrotną w polu response.
+
+W celu zakończenia sesji klienta, program przesyła wiadomość typu LOGOUT,
+nie wypełniając żadnego pola poza mtype. Wiadomość zwrotna nie jest odsyłana.
