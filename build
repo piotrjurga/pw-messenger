@@ -1,0 +1,4 @@
+#! /bin/bash
+
+gcc -o server inf136728_s.c
+gcc -o client inf136728_k.c -lncurses
